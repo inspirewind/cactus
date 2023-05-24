@@ -191,7 +191,10 @@ def main():
 
 def hal2maf_workflow(job, hal_id, options, config):
 
-    hal2maf_ranges_job = job.addChildJobFn(hal2maf_ranges, hal_id, options, cores=1, disk=hal_id.size)    
+    # hack to get around situation where a 1-core job gets no disk on slurm
+    ranges_cores = options.batchCores if options.batchSystem == 'slurm' else 1
+    hal2maf_ranges_job = job.addChildJobFn(hal2maf_ranges, hal_id, options, cores=ranges_cores, disk=hal_id.size,
+                                           memory=math.ceil(hal_id.size * 0.01))    
     hal2maf_all_job = hal2maf_ranges_job.addFollowOnJobFn(hal2maf_all, hal_id, hal2maf_ranges_job.rv(), options, config)
     hal2maf_merge_job = hal2maf_all_job.addFollowOnJobFn(hal2maf_merge, hal2maf_all_job.rv(), options, disk=hal_id.size)
     return hal2maf_merge_job.rv()
@@ -257,7 +260,8 @@ def hal2maf_all(job, hal_id, chunks, options, config):
         cur_batch_size = min(chunks_left, batch_size)
         if cur_batch_size:
             batch_results.append(job.addChildJobFn(hal2maf_batch, hal_id, chunks[cur_chunk:cur_chunk+cur_batch_size], options, config,
-                                                   disk=math.ceil((1 + 1.5 / num_batches)*hal_id.size), cores=options.batchCores).rv())
+                                                   disk=math.ceil((1 + 1.5 / num_batches)*hal_id.size), cores=options.batchCores,
+                                                   memory=math.ceil(options.batchCores * hal_id.size * 0.01)).rv())
         chunks_left -= cur_batch_size
     assert chunks_left == 0
     
