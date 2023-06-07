@@ -775,10 +775,10 @@ def make_giraffe_indexes(job, options, config, index_dict, tag=''):
 def odgi_squeeze(job, config, vg_paths, og_ids, tag=''):
     """ combine chrom odgis into one big odgi """
     work_dir = job.fileStore.getLocalTempDir()
-    merged_path = os.path.join(work_dir, tag + '.og')
+    merged_path = os.path.join(work_dir, tag + 'og')
     og_paths = []
     for vg_path, og_id in zip(vg_paths, og_ids):
-        og_path = os.path.join(work_dir, os.path.basename(os.path.splitext(vg_path)[0]) + '.{}.og'.format(tag))
+        og_path = os.path.join(work_dir, os.path.basename(os.path.splitext(vg_path)[0]) + '.{}og'.format(tag))
         job.fileStore.readGlobalFile(og_id, og_path)
         og_paths.append(og_path)
     list_path = os.path.join(work_dir, '{}.squeeze.input'.format(tag))
