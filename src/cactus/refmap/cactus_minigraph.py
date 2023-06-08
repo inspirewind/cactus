@@ -147,8 +147,7 @@ def minigraph_construct_workflow(job, config_node, seq_id_map, seq_order, gfa_pa
     else:
         prev_job = sanitize_job
     minigraph_job = prev_job.addFollowOnJobFn(minigraph_construct, config_node, sanitized_seq_id_map, seq_order, gfa_path,
-                                              cores = mg_cores,
-                                              disk = 5 * sum([seq_id.size for seq_id in seq_id_map.values()]))
+                                              cores = mg_cores)
     return minigraph_job.rv()
 
 def sort_minigraph_input_with_mash(job, seq_id_map, seq_order):
@@ -189,8 +188,18 @@ def mash_distance_order(job, seq_order, mash_dists):
         seq_to_dist[seq] = md
     return sorted(seq_order, key = lambda x : seq_to_dist[x])
     
-def minigraph_construct(job, config_node, seq_id_map, seq_order, gfa_path):
+def minigraph_construct(job, config_node, seq_id_map, seq_order, gfa_path, has_resources=False):
     """ Make minigraph """
+
+    if not has_resources:
+        # get the file sizes from the resolved promises run again with calculated resources
+        max_size = max([x.size for x in seq_id_map.values()])
+        total_size = sum([x.size for x in seq_id_map.values()])
+        disk = total_size * 2
+        mem = 64 * max_size + int(total_size / 5)
+        return job.addChildJobFn(minigraph_construct, config_node, seq_id_map, seq_order, gfa_path,
+                                 has_resources=True, disk=disk, memory=mem, cores=job.cores).rv()
+
     work_dir = job.fileStore.getLocalTempDir()
     gfa_path = os.path.join(work_dir, os.path.basename(gfa_path))
 
