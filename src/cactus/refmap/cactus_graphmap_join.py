@@ -407,7 +407,7 @@ def clip_vg(job, options, config, vg_path, vg_id, phase):
         fix_cmd = ['gfaffix', gfa_in_path, '--output_refined', gfa_out_path, '--check_transformation']
         if options.reference:
             fix_cmd += ['--dont_collapse', options.reference[0] + '*']
-        cactus_call(parameters=fix_cmd, , job_memory=job.memory)
+        cactus_call(parameters=fix_cmd, job_memory=job.memory)
         # GFAffix strips the header, until this is fixed we need to add it back (for the RS tag)
         gfa_header = cactus_call(parameters=['head', '-1', gfa_in_path], check_output=True).strip()
         cactus_call(parameters=['sed', '-i', gfa_out_path, '-e', '1s/.*/{}/'.format(gfa_header)])
